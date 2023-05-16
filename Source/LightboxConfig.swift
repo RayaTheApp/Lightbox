@@ -96,4 +96,8 @@ public class LightboxConfig {
     public static var minimumScale: CGFloat = 1.0
     public static var maximumScale: CGFloat = 3.0
   }
+
+  public struct Transition {
+    public static var enabled = true
+  }
 }
