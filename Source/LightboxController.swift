@@ -114,6 +114,10 @@ open class LightboxController: UIViewController {
     }
   }
 
+  open var currentImageView: UIImageView {
+    pageViews[currentPage].imageView
+  }
+
   open var numberOfPages: Int {
     return pageViews.count
   }
