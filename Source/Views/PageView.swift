@@ -100,6 +100,7 @@ class PageView: UIScrollView {
 
   // MARK: - Update
   func update(with image: LightboxImage) {
+    LightboxConfig.cancelImageLoad?(imageView)
     self.image = image
     updatePlayButton()
     fetchImage()

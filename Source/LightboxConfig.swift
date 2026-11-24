@@ -21,15 +21,38 @@ public class LightboxConfig {
   /// How to load image onto SDAnimatedImageView
   public static var loadImage: ((UIImageView, URL, ((UIImage?) -> Void)?) -> Void)?
 
+  /// Stops the load that `loadImage` started for an image view.
+  ///
+  /// A page calls this before it shows a different image, including when it leaves the preload window. A load that
+  /// finishes after that point would put the old image back on the page.
+  public static var cancelImageLoad: ((UIImageView) -> Void)?
+
   /// Indicator is used to show while image is being fetched
   public static var makeLoadingIndicator: () -> UIView = {
     return LoadingIndicator()
   }
 
-  /// Number of images to preload.
-  ///
-  /// 0 - Preload all images (default).
-  public static var preload = 0
+  /// Which pages hold their image. Pages outside the window show an empty stub, which frees their image.
+  public static var preload: Preload = .allPages
+
+  public enum Preload: Equatable {
+    case allPages
+    /// Keeps `behind` pages before the current page and `ahead` pages after it. A count below zero counts as zero.
+    case window(behind: Int, ahead: Int)
+
+    /// The pages that hold their image while `page` shows, or nil when there are no pages.
+    public func pageIndices(around page: Int, pageCount: Int) -> ClosedRange<Int>? {
+      guard pageCount > 0 else { return nil }
+      let lastPage = pageCount - 1
+      switch self {
+      case .allPages:
+        return 0...lastPage
+      case let .window(behind, ahead):
+        let center = min(lastPage, max(0, page))
+        return max(0, center - max(0, behind))...min(lastPage, center + max(0, ahead))
+      }
+    }
+  }
 
   public struct PageIndicator {
     public static var enabled = true

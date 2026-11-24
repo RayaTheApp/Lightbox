@@ -148,7 +148,7 @@ open class LightboxController: UIViewController {
     }
     set(value) {
       initialImages = value
-      configurePages(value)
+      configurePages(value, around: currentPage)
     }
   }
 
@@ -201,7 +201,7 @@ open class LightboxController: UIViewController {
     [scrollView, overlayView, headerView, footerView].forEach { view.addSubview($0) }
     overlayView.addGestureRecognizer(overlayTapGestureRecognizer)
 
-    configurePages(initialImages)
+    configurePages(initialImages, around: initialPage)
 
     goTo(initialPage, animated: false)
   }
@@ -249,14 +249,18 @@ open class LightboxController: UIViewController {
 
   // MARK: - Configuration
 
-  func configurePages(_ images: [LightboxImage]) {
+  /// Builds one page per image. Only the pages in the preload window around `page` load their image.
+  ///
+  /// The first build runs before `goTo` moves to the start page, so the window takes the page to build around
+  /// instead of reading `currentPage`.
+  func configurePages(_ images: [LightboxImage], around page: Int) {
     pageViews.forEach { $0.removeFromSuperview() }
     pageViews = []
 
-    let preloadIndicies = calculatePreloadIndicies()
+    let preloadIndices = LightboxConfig.preload.pageIndices(around: page, pageCount: images.count)
 
     for i in 0..<images.count {
-      let pageView = PageView(image: preloadIndicies.contains(i) ? images[i] : LightboxImageStub())
+      let pageView = PageView(image: preloadIndices?.contains(i) == true ? images[i] : LightboxImageStub())
       pageView.pageViewDelegate = self
 
       scrollView.addSubview(pageView)
@@ -267,11 +271,11 @@ open class LightboxController: UIViewController {
   }
 
   func reconfigurePagesForPreload() {
-    let preloadIndicies = calculatePreloadIndicies()
+    let preloadIndices = LightboxConfig.preload.pageIndices(around: currentPage, pageCount: initialImages.count)
 
     for i in 0..<initialImages.count {
       let pageView = pageViews[i]
-      if preloadIndicies.contains(i) {
+      if preloadIndices?.contains(i) == true {
         if type(of: pageView.image) == LightboxImageStub.self {
           pageView.update(with: initialImages[i])
         }
@@ -354,22 +358,6 @@ open class LightboxController: UIViewController {
       self.footerView.alpha = alpha
       pageView?.playButton.alpha = alpha
     }, completion: nil)
-  }
-
-  // MARK: - Helper functions
-  func calculatePreloadIndicies () -> [Int] {
-    var preloadIndicies: [Int] = []
-    let preload = LightboxConfig.preload
-    if preload > 0 {
-      let lb = max(0, currentPage - preload)
-      let rb = min(initialImages.count, currentPage + preload)
-      for i in lb..<rb {
-        preloadIndicies.append(i)
-      }
-    } else {
-      preloadIndicies = [Int](0..<initialImages.count)
-    }
-    return preloadIndicies
   }
 }
 
