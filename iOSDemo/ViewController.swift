@@ -23,7 +23,7 @@ class ViewController: UIViewController {
     view.backgroundColor = UIColor.white
     view.addSubview(showButton)
     title = "Lightbox"
-    LightboxConfig.preload = 2
+    LightboxConfig.preload = .window(behind: 2, ahead: 2)
     LightboxConfig.loadImage = { imageView, url, completion in
       imageView.sd_setImage(with: url) { image, _, _ , _ in
         completion?(image)
